@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generate PWA Icons</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    h1 { color: #667eea; margin-bottom: 20px; }
+    p { color: #666; margin-bottom: 30px; line-height: 1.6; }
+    canvas { display: none; }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 10px;
+    }
+    button:hover { background: #5568d3; }
+    .preview { margin: 20px 0; }
+    .preview img {
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 PWA Icon Generator</h1>
+    <p>Click the buttons below to generate and download app icons</p>
+
+    <div class="preview" id="preview"></div>
+
+    <button onclick="generateIcon(192)">Generate 192x192 Icon</button>
+    <button onclick="generateIcon(512)">Generate 512x512 Icon</button>
+
+    <canvas id="canvas"></canvas>
+  </div>
+
+  <script>
+    function generateIcon(size) {
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+
+      canvas.width = size;
+      canvas.height = size;
+
+      // Create gradient background
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#667eea');
+      gradient.addColorStop(1, '#764ba2');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+
+      // Add AI text
+      ctx.fillStyle = 'white';
+      ctx.font = `bold ${size * 0.4}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('AI', size / 2, size / 2);
+
+      // Add small text
+      ctx.font = `${size * 0.1}px Arial`;
+      ctx.fillText('Nitesh', size / 2, size * 0.75);
+
+      // Convert to blob and download
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `icon-${size}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        // Show preview
+        const img = document.createElement('img');
+        img.src = url;
+        img.width = 100;
+        img.height = 100;
+        document.getElementById('preview').appendChild(img);
+
+        alert(`✅ icon-${size}.png downloaded! Save it in the 'public' folder.`);
+      });
+    }
+  </script>
+</body>
+</html>

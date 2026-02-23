@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- PWA Primary Meta Tags -->
+    <title>Nitesh's AI Chatbot</title>
+    <meta name="title" content="Nitesh's AI Chatbot" />
+    <meta name="description" content="Chat with Nitesh's AI Assistant - Full Stack Chatbot Application" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#667eea" />
+    <meta name="msapplication-TileColor" content="#667eea" />
+
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="AI Chatbot" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Register Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then((registration) => {
+              console.log('✅ Service Worker registered successfully:', registration.scope);
+            })
+            .catch((error) => {
+              console.log('❌ Service Worker registration failed:', error);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PWA Test - Check Status</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: white;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.1);
+      padding: 30px;
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+    }
+    h1 { text-align: center; margin-bottom: 30px; }
+    .status {
+      background: rgba(255,255,255,0.2);
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .status.success { background: rgba(74, 222, 128, 0.3); }
+    .status.error { background: rgba(239, 68, 68, 0.3); }
+    .icon { font-size: 24px; }
+    button {
+      background: white;
+      color: #667eea;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      margin: 10px 0;
+    }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    pre {
+      background: rgba(0,0,0,0.3);
+      padding: 15px;
+      border-radius: 10px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 PWA Status Check</h1>
+
+    <div id="checks"></div>
+
+    <button id="installBtn" style="display:none;">📱 Install App Now</button>
+    <button onclick="location.href='/'">← Back to App</button>
+
+    <h3>📋 Debug Info:</h3>
+    <pre id="debug"></pre>
+  </div>
+
+  <script>
+    const checks = document.getElementById('checks');
+    const debug = document.getElementById('debug');
+    const installBtn = document.getElementById('installBtn');
+    let deferredPrompt;
+
+    // Check functions
+    const checkServiceWorker = () => {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          addCheck('Service Worker', registrations.length > 0,
+            registrations.length > 0 ? 'Registered' : 'Not registered');
+
+          if (registrations.length > 0) {
+            addDebug('Service Worker Scope: ' + registrations[0].scope);
+          }
+        });
+        return true;
+      }
+      return false;
+    };
+
+    const checkManifest = async () => {
+      try {
+        const response = await fetch('/manifest.json');
+        const manifest = await response.json();
+        addCheck('Manifest', response.ok, response.ok ? 'Found' : 'Missing');
+        if (response.ok) {
+          addDebug('Manifest: ' + JSON.stringify(manifest, null, 2));
+        }
+        return response.ok;
+      } catch (e) {
+        addCheck('Manifest', false, 'Error: ' + e.message);
+        return false;
+      }
+    };
+
+    const checkIcons = async () => {
+      try {
+        const response = await fetch('/icon.svg');
+        addCheck('App Icon', response.ok, response.ok ? 'Found' : 'Missing');
+        return response.ok;
+      } catch (e) {
+        addCheck('App Icon', false, 'Error: ' + e.message);
+        return false;
+      }
+    };
+
+    const checkHTTPS = () => {
+      const isSecure = location.protocol === 'https:' || location.hostname === 'localhost';
+      addCheck('HTTPS/Localhost', isSecure,
+        isSecure ? 'Secure' : 'Need HTTPS for production');
+      return isSecure;
+    };
+
+    const checkInstallable = () => {
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        addCheck('Installation Status', true, 'Already Installed! ✅');
+        return true;
+      } else {
+        addCheck('Installation Status', null, 'Not installed yet');
+        return false;
+      }
+    };
+
+    // Helper functions
+    function addCheck(name, status, message) {
+      const div = document.createElement('div');
+      div.className = 'status ' + (status === true ? 'success' : status === false ? 'error' : '');
+      div.innerHTML = `
+        <span><strong>${name}:</strong> ${message}</span>
+        <span class="icon">${status === true ? '✅' : status === false ? '❌' : '⚠️'}</span>
+      `;
+      checks.appendChild(div);
+    }
+
+    function addDebug(text) {
+      debug.textContent += text + '\n\n';
+    }
+
+    // Listen for install prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'block';
+      addCheck('Install Prompt', true, 'Available! ✅');
+    });
+
+    // Install button handler
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) {
+        alert('Install prompt not available');
+        return;
+      }
+
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+
+      if (outcome === 'accepted') {
+        alert('✅ App installed successfully!');
+      } else {
+        alert('❌ Installation cancelled');
+      }
+
+      deferredPrompt = null;
+      installBtn.style.display = 'none';
+    });
+
+    // Run all checks
+    window.addEventListener('load', () => {
+      addDebug('Browser: ' + navigator.userAgent);
+      addDebug('URL: ' + location.href);
+      addDebug('Protocol: ' + location.protocol);
+      addDebug('\n--- Running Checks ---\n');
+
+      checkHTTPS();
+      checkServiceWorker();
+      checkManifest();
+      checkIcons();
+      checkInstallable();
+
+      addDebug('\n--- Status Summary ---');
+      addDebug('If all checks pass and install prompt still not showing:');
+      addDebug('1. Try closing and reopening the browser');
+      addDebug('2. Clear cache (Ctrl+Shift+Delete)');
+      addDebug('3. Try Chrome/Edge (best PWA support)');
+      addDebug('4. On mobile: Use Chrome, not other browsers');
+    });
+  </script>
+</body>
+</html>
